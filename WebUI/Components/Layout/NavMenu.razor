@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="nav-menu">
+    <AuthorizeView>
+        <Authorized>
+            <NavLink href="/" class="nav-item" Match="NavLinkMatch.All">
+                <i class='bx bx-home'></i> <span>Beranda</span>
+            </NavLink>
+
+            <AuthorizeView Roles="user" Context="userCtx">
+                <Authorized>
+                    <NavLink href="/biodata" class="nav-item">
+                        <i class='bx bx-notepad'></i> <span>Biodata Saya</span>
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="admin" Context="adminCtx">
+                <Authorized>
+                    <div class="nav-section-label">Admin</div>
+                    <NavLink href="/admin" class="nav-item">
+                        <i class='bx bx-group'></i> <span>Semua Kandidat</span>
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+        </Authorized>
+    </AuthorizeView>
+</div>

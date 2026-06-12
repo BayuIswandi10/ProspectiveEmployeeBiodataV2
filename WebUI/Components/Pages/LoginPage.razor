@@ -1,0 +1,103 @@
+@page "/login"
+@layout Layout.AuthLayout
+@using Domain.Models
+@using WebUI.Services
+@inject AuthApiService AuthApi
+@inject CustomAuthStateProvider AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Login - Biodata App</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">👤</div>
+        <h1 class="auth-title">Masuk</h1>
+        <p class="auth-subtitle">Sistem Biodata Calon Karyawan</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin" autocomplete="off">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="login-email" class="form-label">Email</label>
+                <InputText id="login-email"
+                           @bind-Value="loginRequest.Email"
+                           class="form-control"
+                           placeholder="email@contoh.com"
+                           type="email" 
+                           autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <label for="login-password" class="form-label">Password</label>
+                <InputText id="login-password"
+                           @bind-Value="loginRequest.Password"
+                           class="form-control"
+                           placeholder="••••••••"
+                           type="password" 
+                           autocomplete="new-password" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" disabled="@isLoading">
+                @if (isLoading) { <span class="spinner"></span> }
+                Masuk
+            </button>
+        </EditForm>
+
+        <div class="auth-footer">
+            <span>Belum punya akun? </span>
+            <a href="/register">Daftar sekarang</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginRequest = new();
+    private string? errorMessage;
+    private bool isLoading;
+
+    private bool _firstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        // Redirect if already logged in
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+            Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged();
+        await Task.Yield();
+
+        try
+        {
+            var result = await AuthApi.LoginAsync(loginRequest);
+            if (result?.Success == true && result.Data?.Token is not null)
+            {
+                await AuthState.LoginAsync(result.Data.Token);
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = result?.Message ?? "Login gagal";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Gagal terhubung ke server: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

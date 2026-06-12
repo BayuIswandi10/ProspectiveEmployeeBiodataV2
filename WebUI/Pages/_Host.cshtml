@@ -1,0 +1,38 @@
+@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@namespace WebUI.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sistem Biodata Calon Karyawan - Prospective Employee Biodata" />
+    <title>Biodata App</title>
+    <base href="~/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link href="app.css" rel="stylesheet" />
+    <link href="WebUI.styles.css" rel="stylesheet" />
+    <link rel="icon" href="data:," />
+    <component type="typeof(HeadOutlet)" render-mode="Server" />
+</head>
+<body>
+    <component type="typeof(WebUI.Components.App)" render-mode="Server" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            Terjadi kesalahan. Muat ulang halaman.
+        </environment>
+        <environment include="Development">
+            Terjadi error. Lihat browser dev tools.
+        </environment>
+        <a href="" class="reload">Muat Ulang</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

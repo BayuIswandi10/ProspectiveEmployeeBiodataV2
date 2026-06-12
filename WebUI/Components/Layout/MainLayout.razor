@@ -1,0 +1,54 @@
+@using Domain.Models
+@using WebUI.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+@namespace WebUI.Components.Layout
+@inherits LayoutComponentBase
+@inject CustomAuthStateProvider AuthState
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationState
+
+<div class="layout-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar @(sidebarOpen ? "open" : "")">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class='bx bx-user-circle'></i></div>
+            <span class="brand-text">Biodata App</span>
+        </div>
+        <NavMenu />
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <nav class="topbar">
+            <button class="sidebar-toggle" @onclick="ToggleSidebar">☰</button>
+            <div class="topbar-title">Sistem Biodata Karyawan</div>
+            <div class="topbar-user">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="user-email">@context.User.Identity?.Name</span>
+                        <button class="btn-logout" @onclick="Logout">Keluar</button>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </nav>
+
+        <!-- Page Body -->
+        <main class="page-body">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    private bool sidebarOpen = true;
+
+    private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+
+    private async Task Logout()
+    {
+        await AuthState.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+}

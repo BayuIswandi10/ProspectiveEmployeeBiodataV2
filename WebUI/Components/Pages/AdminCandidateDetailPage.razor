@@ -1,0 +1,173 @@
+@page "/admin/candidates/{Id:int}"
+@attribute [Authorize(Roles = "admin")]
+@using Domain.Models
+@using WebUI.Services
+@inject AdminApiService AdminApi
+@inject NavigationManager Navigation
+
+<PageTitle>Detail Kandidat - Biodata App</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title"><i class='bx bx-user'></i> Detail Kandidat</h1>
+    <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/admin")'>
+        <i class='bx bx-arrow-back'></i> Kembali
+    </button>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="spinner-large"></div>
+        <p>Memuat data kandidat...</p>
+    </div>
+}
+else if (biodata is null)
+{
+    <div class="empty-state">
+        <div class="empty-icon"><i class='bx bx-folder-open' style='font-size: 2rem; color: #cbd5e1;'></i></div>
+        <h3>Kandidat Tidak Ditemukan</h3>
+        <p>Data kandidat dengan ID @Id tidak dapat ditemukan atau Anda tidak memiliki akses.</p>
+    </div>
+}
+else
+{
+    <div class="biodata-detail">
+        <!-- Data Diri -->
+        <div class="detail-card">
+            <h2 class="card-title">Data Diri</h2>
+            <div class="detail-grid">
+                <div class="detail-item"><span class="label">Nama Lengkap</span><span class="value">@biodata.Nama</span></div>
+                <div class="detail-item"><span class="label">Posisi Dilamar</span><span class="value">@biodata.PosisiDilamar</span></div>
+                <div class="detail-item"><span class="label">No. KTP</span><span class="value">@biodata.NoKtp</span></div>
+                <div class="detail-item"><span class="label">Tempat, Tgl. Lahir</span><span class="value">@biodata.TempatLahir, @biodata.TanggalLahir.ToString("dd MMMM yyyy")</span></div>
+                <div class="detail-item"><span class="label">Jenis Kelamin</span><span class="value">@biodata.JenisKelamin</span></div>
+                <div class="detail-item"><span class="label">Agama</span><span class="value">@biodata.Agama</span></div>
+                <div class="detail-item"><span class="label">Gol. Darah</span><span class="value">@(biodata.GolonganDarah ?? "-")</span></div>
+                <div class="detail-item"><span class="label">Status</span><span class="value">@biodata.Status</span></div>
+                <div class="detail-item"><span class="label">Email</span><span class="value">@biodata.Email</span></div>
+                <div class="detail-item"><span class="label">No. Telp</span><span class="value">@biodata.NoTelp</span></div>
+                <div class="detail-item"><span class="label">Orang Terdekat</span><span class="value">@biodata.OrangTerdekat</span></div>
+                <div class="detail-item full-width"><span class="label">Alamat KTP</span><span class="value">@biodata.AlamatKtp</span></div>
+                <div class="detail-item full-width"><span class="label">Alamat Tinggal</span><span class="value">@biodata.AlamatTinggal</span></div>
+            </div>
+        </div>
+
+
+
+        <!-- Pendidikan -->
+        @if (biodata.Pendidikan.Any())
+        {
+            <div class="detail-card">
+                <h2 class="card-title"><i class='bx bxs-graduation'></i> Riwayat Pendidikan</h2>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Jenjang</th><th>Institusi</th><th>Jurusan</th><th>Tahun Lulus</th><th>IPK</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in biodata.Pendidikan)
+                            {
+                                <tr>
+                                    <td>@p.Jenjang</td>
+                                    <td>@p.NamaInstitusi</td>
+                                    <td>@p.Jurusan</td>
+                                    <td>@p.TahunLulus</td>
+                                    <td>@(p.Ipk?.ToString("F2") ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Pelatihan -->
+        @if (biodata.Pelatihan.Any())
+        {
+            <div class="detail-card">
+                <h2 class="card-title"><i class='bx bx-award'></i> Pelatihan & Sertifikasi</h2>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Nama Kursus</th><th>Tahun</th><th>Sertifikat</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in biodata.Pelatihan)
+                            {
+                                <tr>
+                                    <td>@p.NamaKursus</td>
+                                    <td>@p.Tahun</td>
+                                    <td><span class="badge @(p.Sertifikat ? "badge-success" : "badge-secondary")">@(p.Sertifikat ? "Ada" : "Tidak")</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Pekerjaan -->
+        @if (biodata.Pekerjaan.Any())
+        {
+            <div class="detail-card">
+                <h2 class="card-title"><i class='bx bx-briefcase'></i> Pengalaman Kerja</h2>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Perusahaan</th><th>Posisi Terakhir</th><th>Pendapatan</th><th>Tahun</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in biodata.Pekerjaan)
+                            {
+                                <tr>
+                                    <td>@p.NamaPerusahaan</td>
+                                    <td>@p.PosisiTerakhir</td>
+                                    <td>Rp @p.PendapatanTerakhir.ToString("N0")</td>
+                                    <td>@p.Tahun</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Skill & Preferensi Kerja -->
+        <div class="detail-card">
+            <h2 class="card-title"><i class='bx bx-bulb'></i> Skill & Preferensi Kerja</h2>
+            <div class="detail-grid">
+                @if (!string.IsNullOrEmpty(biodata.Skill))
+                {
+                    <div class="detail-item full-width"><span class="label">Skill / Keahlian</span><span class="value">@biodata.Skill</span></div>
+                }
+                <div class="detail-item"><span class="label">Bersedia Ditempatkan di Seluruh Indonesia</span><span class="value">@(biodata.BersediaDitempatkan ? "Ya" : "Tidak")</span></div>
+                <div class="detail-item"><span class="label">Penghasilan yang Diharapkan</span><span class="value">Rp @biodata.PenghasilanDiharapkan.ToString("N0")</span></div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private BiodataResponse? biodata;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await AdminApi.GetCandidateDetailAsync(Id);
+            if (result?.Success == true) biodata = result.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetch candidate: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

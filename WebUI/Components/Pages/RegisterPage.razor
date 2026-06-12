@@ -1,0 +1,97 @@
+@page "/register"
+@layout Layout.AuthLayout
+@using Domain.Models
+@using WebUI.Services
+@inject AuthApiService AuthApi
+@inject NavigationManager Navigation
+
+<PageTitle>Daftar - Biodata App</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">📝</div>
+        <h1 class="auth-title">Daftar Akun</h1>
+        <p class="auth-subtitle">Buat akun untuk mengisi biodata</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        <EditForm Model="@registerRequest" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="register-email" class="form-label">Email</label>
+                <InputText id="register-email"
+                           @bind-Value="registerRequest.Email"
+                           class="form-control"
+                           placeholder="email@contoh.com"
+                           type="email" />
+            </div>
+
+            <div class="form-group">
+                <label for="register-password" class="form-label">Password</label>
+                <InputText id="register-password"
+                           @bind-Value="registerRequest.Password"
+                           class="form-control"
+                           placeholder="Minimal 8 karakter"
+                           type="password" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" disabled="@isLoading">
+                @if (isLoading) { <span class="spinner"></span> }
+                Daftar
+            </button>
+        </EditForm>
+
+        <div class="auth-footer">
+            <span>Sudah punya akun? </span>
+            <a href="/login">Masuk</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterRequest registerRequest = new() { Role = "user" };
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+        StateHasChanged();
+        await Task.Yield();
+
+        try
+        {
+            var result = await AuthApi.RegisterAsync(registerRequest);
+            if (result?.Success == true)
+            {
+                successMessage = "Registrasi berhasil! Silahkan login.";
+                StateHasChanged();
+                await Task.Delay(1500);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = result?.Message ?? "Registrasi gagal";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Gagal terhubung ke server: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

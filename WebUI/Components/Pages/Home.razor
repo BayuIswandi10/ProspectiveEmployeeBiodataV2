@@ -1,0 +1,46 @@
+@page "/"
+@attribute [Authorize]
+@using Domain.Models
+@using WebUI.Services
+@inject BiodataApiService BiodataApi
+@inject NavigationManager Navigation
+
+<PageTitle>Beranda - Biodata App</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">🏠 Beranda</h1>
+    <p class="page-subtitle">Selamat datang di Sistem Biodata Calon Karyawan</p>
+</div>
+
+<div class="card-grid">
+    <div class="info-card">
+        <div class="card-icon">📋</div>
+        <h3>Biodata Saya</h3>
+        <p>Isi dan kelola data diri Anda sebagai calon karyawan</p>
+        <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/biodata")'>
+            Lihat Biodata
+        </button>
+    </div>
+
+    <div class="info-card">
+        <div class="card-icon">✏️</div>
+        <h3>Perbarui Data</h3>
+        <p>Update informasi pendidikan, pelatihan, dan pengalaman kerja</p>
+        <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/biodata/form")'>
+            Edit Biodata
+        </button>
+    </div>
+
+    <AuthorizeView Roles="admin">
+        <Authorized>
+            <div class="info-card highlight">
+                <div class="card-icon">👥</div>
+                <h3>Panel Admin</h3>
+                <p>Kelola semua kandidat yang mendaftar</p>
+                <button class="btn btn-accent" @onclick='() => Navigation.NavigateTo("/admin")'>
+                    Kelola Kandidat
+                </button>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>

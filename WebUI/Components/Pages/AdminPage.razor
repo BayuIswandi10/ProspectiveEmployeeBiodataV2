@@ -1,0 +1,155 @@
+@page "/admin"
+@attribute [Authorize(Roles = "admin")]
+@using Domain.Models
+@using WebUI.Services
+@inject AdminApiService AdminApi
+@inject NavigationManager Navigation
+
+<PageTitle>Admin - Semua Kandidat</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title"><i class='bx bx-group'></i> Semua Kandidat</h1>
+    <span class="badge badge-info">Total: @totalData</span>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar">
+    <div class="search-group">
+        <InputText @bind-Value="searchQuery" class="form-control" placeholder="Cari..." @onkeyup="OnSearchKeyUp" />
+        <InputSelect @bind-Value="searchBy" class="form-control select-sm">
+            <option value="">Semua</option>
+            <option value="nama">Nama</option>
+            <option value="posisi">Posisi</option>
+            <option value="jenjang">Jenjang Pendidikan</option>
+        </InputSelect>
+        <button class="btn btn-primary" @onclick="LoadData"><i class='bx bx-search'></i> Cari</button>
+        <button class="btn btn-ghost" @onclick="ResetSearch">Reset</button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="loading-container"><div class="spinner-large"></div><p>Memuat...</p></div>
+}
+else if (!candidates.Any())
+{
+    <div class="empty-state"><div class="empty-icon"><i class='bx bx-folder-open' style='font-size: 2rem; color: #cbd5e1;'></i></div><h3>Tidak ada kandidat ditemukan</h3></div>
+}
+else
+{
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Posisi</th>
+                    <th>Jenis Kelamin</th>
+                    <th>Pendidikan</th>
+                    <th>Gaji Harapan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (c, i) in candidates.Select((x, i) => (x, i)))
+                {
+                    <tr>
+                        <td>@((currentPage - 1) * pageSize + i + 1)</td>
+                        <td class="name-cell">
+                            <strong>@c.Nama</strong>
+                            <small>@c.Email</small>
+                        </td>
+                        <td>@c.PosisiDilamar</td>
+                        <td>@c.JenisKelamin</td>
+                        <td>@(c.Pendidikan.LastOrDefault()?.Jenjang ?? "-")</td>
+                        <td>Rp @c.PenghasilanDiharapkan.ToString("N0")</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" @onclick="() => NavigateToDetail(c.Id)">Detail</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteCandidate(c.Id, c.Nama)">Hapus</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        <button class="btn btn-sm btn-ghost" @onclick="PrevPage" disabled="@(currentPage == 1)">← Sebelumnya</button>
+        <span class="page-info">Halaman @currentPage dari @totalPages</span>
+        <button class="btn btn-sm btn-ghost" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Selanjutnya →</button>
+    </div>
+}
+
+@code {
+    private List<BiodataResponse> candidates = new();
+    private string searchQuery = "";
+    private string searchBy = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalData;
+    private int totalPages;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await AdminApi.GetAllCandidatesAsync(
+                string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
+                string.IsNullOrWhiteSpace(searchBy) ? null : searchBy,
+                currentPage, pageSize);
+
+            if (result?.Success == true && result.Data is not null)
+            {
+                candidates = result.Data.Data;
+                totalData = result.Data.Total;
+                totalPages = result.Data.TotalPages;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error LoadData: {ex.Message}");
+        }
+        finally { isLoading = false; }
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            currentPage = 1;
+            await LoadData();
+        }
+    }
+
+    private async Task ResetSearch()
+    {
+        searchQuery = "";
+        searchBy = "";
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage > 1) { currentPage--; await LoadData(); }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages) { currentPage++; await LoadData(); }
+    }
+
+    private void NavigateToDetail(int id) =>
+        Navigation.NavigateTo($"/admin/candidates/{id}");
+
+    private async Task DeleteCandidate(int id, string nama)
+    {
+        if (await AdminApi.DeleteCandidateAsync(id))
+            await LoadData();
+    }
+}

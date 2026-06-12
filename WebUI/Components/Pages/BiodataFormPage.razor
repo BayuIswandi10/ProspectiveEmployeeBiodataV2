@@ -1,0 +1,323 @@
+@page "/biodata/form"
+@attribute [Authorize(Roles = "user")]
+@using Domain.Models
+@using WebUI.Services
+@inject BiodataApiService BiodataApi
+@inject NavigationManager Navigation
+
+<PageTitle>Form Biodata - Biodata App</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title"><i class='bx bx-pencil'></i> @(isEdit ? "Edit Biodata" : "Isi Biodata")</h1>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<EditForm Model="@form" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <!-- Card 1: Data Pribadi -->
+    <div class="form-card">
+        <h2 class="card-title"><i class='bx bx-user'></i> 1. Data Pribadi</h2>
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label class="form-label">Posisi yang Dilamar *</label>
+                <InputText @bind-Value="form.PosisiDilamar" class="form-control" placeholder="Mis: Backend Developer" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nama Lengkap *</label>
+                <InputText @bind-Value="form.Nama" class="form-control" placeholder="Nama sesuai KTP" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">No. KTP *</label>
+                <InputText @bind-Value="form.NoKtp" class="form-control" placeholder="16 digit NIK" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tempat Lahir</label>
+                <InputText @bind-Value="form.TempatLahir" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tanggal Lahir</label>
+                <InputDate @bind-Value="form.TanggalLahir" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Golongan Darah</label>
+                <InputSelect @bind-Value="form.GolonganDarah" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option>A</option><option>B</option><option>AB</option><option>O</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Jenis Kelamin</label>
+                <InputSelect @bind-Value="form.JenisKelamin" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Agama</label>
+                <InputSelect @bind-Value="form.Agama" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option>Islam</option><option>Kristen</option><option>Katolik</option>
+                    <option>Hindu</option><option>Buddha</option><option>Konghucu</option>
+                </InputSelect>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Status Perkawinan</label>
+                <InputSelect @bind-Value="form.Status" class="form-control">
+                    <option value="">-- Pilih --</option>
+                    <option>Lajang</option><option>Menikah</option><option>Cerai</option>
+                </InputSelect>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Alamat & Kontak -->
+    <div class="form-card">
+        <h2 class="card-title"><i class='bx bx-map'></i> 2. Alamat & Kontak</h2>
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label class="form-label">Alamat Sesuai KTP</label>
+                <InputTextArea @bind-Value="form.AlamatKtp" class="form-control" rows="2" />
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">Alamat Domisili</label>
+                <InputTextArea @bind-Value="form.AlamatTinggal" class="form-control" rows="2" />
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="form.Email" class="form-control" type="email" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">No. Telepon / HP *</label>
+                <InputText @bind-Value="form.NoTelp" class="form-control" placeholder="08xx-xxxx-xxxx" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kontak Darurat (Orang Terdekat)</label>
+                <InputText @bind-Value="form.OrangTerdekat" class="form-control" placeholder="Nama orang terdekat" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Riwayat Pendidikan -->
+    <div class="form-card">
+        <div class="card-header-row">
+            <h2 class="card-title"><i class='bx bxs-graduation'></i> 3. Riwayat Pendidikan</h2>
+            <button type="button" class="btn btn-sm btn-secondary" @onclick="AddPendidikan">+ Tambah Riwayat Pendidikan</button>
+        </div>
+        @foreach (var (item, i) in form.Pendidikan.Select((x, i) => (x, i)))
+        {
+            <div class="child-form-row">
+                <div class="form-group">
+                    <label class="form-label">Jenjang</label>
+                    <InputSelect @bind-Value="item.Jenjang" class="form-control">
+                        <option value="">-- Pilih --</option>
+                        <option>SD</option><option>SMP</option><option>SMA/SMK</option>
+                        <option>D3</option><option>S1</option><option>S2</option><option>S3</option>
+                    </InputSelect>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Institusi</label>
+                    <InputText @bind-Value="item.NamaInstitusi" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Jurusan</label>
+                    <InputText @bind-Value="item.Jurusan" class="form-control" />
+                </div>
+                <div class="form-group" style="max-width: 120px;">
+                    <label class="form-label">Tahun Lulus</label>
+                    <InputNumber @bind-Value="item.TahunLulus" class="form-control" />
+                </div>
+                <div class="form-group" style="max-width: 120px;">
+                    <label class="form-label">IPK / Nilai</label>
+                    <InputNumber @bind-Value="item.Ipk" class="form-control" />
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => form.Pendidikan.RemoveAt(i)" title="Hapus Riwayat Pendidikan">✕</button>
+            </div>
+        }
+    </div>
+
+    <!-- Card 4: Riwayat Pelatihan / Kursus -->
+    <div class="form-card">
+        <div class="card-header-row">
+            <h2 class="card-title"><i class='bx bx-award'></i> 4. Riwayat Pelatihan / Kursus</h2>
+            <button type="button" class="btn btn-sm btn-secondary" @onclick="AddPelatihan">+ Tambah Riwayat Pelatihan</button>
+        </div>
+        @foreach (var (item, i) in form.Pelatihan.Select((x, i) => (x, i)))
+        {
+            <div class="child-form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label class="form-label">Nama Kursus / Pelatihan</label>
+                    <InputText @bind-Value="item.NamaKursus" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sertifikat</label>
+                    <div class="checkbox-wrapper">
+                        <InputCheckbox @bind-Value="item.Sertifikat" id="@($"cert_{i}")" />
+                        <label for="@($"cert_{i}")">Ada</label>
+                    </div>
+                </div>
+                <div class="form-group" style="max-width: 120px;">
+                    <label class="form-label">Tahun</label>
+                    <InputNumber @bind-Value="item.Tahun" class="form-control" />
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => form.Pelatihan.RemoveAt(i)" title="Hapus Riwayat Pelatihan">✕</button>
+            </div>
+        }
+    </div>
+
+    <!-- Card 5: Riwayat Pekerjaan -->
+    <div class="form-card">
+        <div class="card-header-row">
+            <h2 class="card-title"><i class='bx bx-briefcase'></i> 5. Riwayat Pekerjaan</h2>
+            <button type="button" class="btn btn-sm btn-secondary" @onclick="AddPekerjaan">+ Tambah Riwayat Pekerjaan</button>
+        </div>
+        @foreach (var (item, i) in form.Pekerjaan.Select((x, i) => (x, i)))
+        {
+            <div class="child-form-row">
+                <div class="form-group">
+                    <label class="form-label">Nama Perusahaan</label>
+                    <InputText @bind-Value="item.NamaPerusahaan" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Posisi Terakhir</label>
+                    <InputText @bind-Value="item.PosisiTerakhir" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pendapatan (Rp)</label>
+                    <InputNumber @bind-Value="item.PendapatanTerakhir" class="form-control" />
+                </div>
+                <div class="form-group" style="max-width: 120px;">
+                    <label class="form-label">Tahun Keluar</label>
+                    <InputNumber @bind-Value="item.Tahun" class="form-control" />
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" @onclick="() => form.Pekerjaan.RemoveAt(i)" title="Hapus Riwayat Pekerjaan">✕</button>
+            </div>
+        }
+    </div>
+
+    <!-- Card 6: Skill & Preferensi Kerja -->
+    <div class="form-card">
+        <h2 class="card-title"><i class='bx bx-star'></i> 6. Skill & Preferensi Kerja</h2>
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label class="form-label">Skill / Keahlian</label>
+                <InputTextArea @bind-Value="form.Skill" class="form-control" rows="3" placeholder="Mis: C#, .NET, SQL Server, Blazor" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Penghasilan yang Diharapkan (Rp)</label>
+                <InputNumber @bind-Value="form.PenghasilanDiharapkan" class="form-control" placeholder="0" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bersedia Ditempatkan di Luar Kota</label>
+                <div class="checkbox-wrapper" style="margin-top: 10px;">
+                    <InputCheckbox @bind-Value="form.BersediaDitempatkan" id="bersedia_luarkota" />
+                    <label for="bersedia_luarkota">Ya, bersedia</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn btn-ghost" @onclick='() => Navigation.NavigateTo("/biodata")'>Batal</button>
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+            @if (isLoading) { <span class="spinner"></span> }
+            @(isEdit ? "Simpan Perubahan" : "Simpan Biodata")
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    private BiodataRequest form = new();
+    private bool isEdit;
+    private int? existingId;
+    private bool isLoading;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await BiodataApi.GetMyBiodataAsync();
+            if (result?.Success == true && result.Data is not null)
+            {
+                isEdit = true;
+                existingId = result.Data.Id;
+                // Pre-fill form dari existing data
+                var d = result.Data;
+                form = new BiodataRequest
+                {
+                    PosisiDilamar = d.PosisiDilamar, Nama = d.Nama, NoKtp = d.NoKtp,
+                    TempatLahir = d.TempatLahir, TanggalLahir = d.TanggalLahir,
+                    JenisKelamin = d.JenisKelamin, Agama = d.Agama, GolonganDarah = d.GolonganDarah,
+                    Status = d.Status, AlamatKtp = d.AlamatKtp, AlamatTinggal = d.AlamatTinggal,
+                    Email = d.Email, NoTelp = d.NoTelp, OrangTerdekat = d.OrangTerdekat,
+                    Skill = d.Skill, BersediaDitempatkan = d.BersediaDitempatkan,
+                    PenghasilanDiharapkan = d.PenghasilanDiharapkan,
+                    Pendidikan = d.Pendidikan.Select(p => new PendidikanRequest
+                    {
+                        Jenjang = p.Jenjang, NamaInstitusi = p.NamaInstitusi,
+                        Jurusan = p.Jurusan, TahunLulus = p.TahunLulus, Ipk = p.Ipk
+                    }).ToList(),
+                    Pelatihan = d.Pelatihan.Select(p => new PelatihanRequest
+                    {
+                        NamaKursus = p.NamaKursus, Sertifikat = p.Sertifikat, Tahun = p.Tahun
+                    }).ToList(),
+                    Pekerjaan = d.Pekerjaan.Select(p => new PekerjaanRequest
+                    {
+                        NamaPerusahaan = p.NamaPerusahaan, PosisiTerakhir = p.PosisiTerakhir,
+                        PendapatanTerakhir = p.PendapatanTerakhir, Tahun = p.Tahun
+                    }).ToList()
+                };
+            }
+        }
+        catch { /* New biodata */ }
+    }
+
+    private void AddPendidikan() => form.Pendidikan.Add(new PendidikanRequest());
+    private void AddPelatihan() => form.Pelatihan.Add(new PelatihanRequest());
+    private void AddPekerjaan() => form.Pekerjaan.Add(new PekerjaanRequest());
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+        try
+        {
+            ApiResponse<BiodataResponse>? result;
+            if (isEdit && existingId.HasValue)
+                result = await BiodataApi.UpdateBiodataAsync(existingId.Value, form);
+            else
+                result = await BiodataApi.CreateBiodataAsync(form);
+
+            if (result?.Success == true)
+            {
+                successMessage = isEdit ? "Biodata berhasil diperbarui!" : "Biodata berhasil disimpan!";
+                await Task.Delay(1000);
+                Navigation.NavigateTo("/biodata");
+            }
+            else
+            {
+                errorMessage = result?.Message ?? "Terjadi kesalahan";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Gagal: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
